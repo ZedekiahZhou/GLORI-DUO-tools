@@ -6,7 +6,6 @@ import pandas as pd
 import polars as pl
 from Bio.Seq import reverse_complement
 import multiprocessing
-from multiprocessing import Manager
 
 def get_refer_base(key):
     global reference_genome

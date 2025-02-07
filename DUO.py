@@ -27,7 +27,7 @@ group_global.add_argument("--clean_fq", type=str, help="clean fastq file for map
 group_global.add_argument("--bam", type=str, help="merged sorted bam files")
 group_global.add_argument("--prx", type=str, help="output file prefix")
 group_global.add_argument("--DUOdir", type=str, default=os.path.dirname(__file__)+"/", help="directory of DUO-tools")
-group_global.add_argument("-o", "--outdir", type=str, default="./res/", help="output directory, default is ./")
+group_global.add_argument("-o", "--outdir", type=str, default="./", help="output directory, default is ./")
 group_global.add_argument("-p", "--threads", type=int, default=20, help="threads used, default is 20")
 group_global.add_argument("--test", action="store_true", help="only print commands to run")
 
@@ -99,6 +99,7 @@ def fun_pre(raw_fq, prx, args):
     print(prx, flush=True)
     print("\n[%s] Preprocessing ========" % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
 
+    # fastqc on raw fastq
     if args.fastqc:
         if not args.test: 
             subprocess.call("mkdir -p " + args.outdir +"/fastqc/raw " + args.outdir + "/fastqc/clean", shell=True)
@@ -136,6 +137,7 @@ def fun_pre(raw_fq, prx, args):
             cmd = cmd + ' --discard-untrimmed'
         run_cmd(cmd)
     
+    # fastqc on clean fastq
     if args.fastqc:
         run_cmd("fastqc "+ clean_fq + " --thread " + str(args.threads) + " -q -o " + args.outdir +"/fastqc/clean")
 
@@ -159,6 +161,14 @@ def fun_mapping(clean_fq, prx, args):
         run_cmd(cmd)
         run_cmd("mv " + site_dir + prx + "_A.bed_sorted " + site_dir + prx + "_AGchanged_2.fq " + \
                 site_dir + "/intermediate/")
+
+    # fastqc on mapped bam files
+    if args.fastqc:
+        if not args.test: 
+            subprocess.call("mkdir -p " + args.outdir +"/fastqc/mapped ", shell=True)
+        mapped_bam=args.outdir + "/03_Sites/" + prx + "_merged.sorted.bam"
+        run_cmd("fastqc " + mapped_bam + " --thread " + str(args.threads) + " -q -o " + args.outdir +"/fastqc/mapped")
+        
 
 
 def fun_m6Am(bam, prx, args):

@@ -4,3 +4,4 @@ Date: 2024-10-24
 - provide argument '--nextseq'
 - allow skipping tag removal step
 - allow '/' in read names
+- 250207: add fastqc for mapped bam files

@@ -161,7 +161,7 @@ if not args.untreated:
         else:
             m6Am_merged = m6Am_merged.join(
                 m6Am,
-                on=[info_col], how="full", coalesce=True
+                on=info_col, how="full", coalesce=True
             )
 
     # Keep sites passed in any sample
