@@ -142,7 +142,9 @@ if __name__ == "__main__":
     group_mappingfilter.add_argument("-t", "--tools", nargs="?", type=str, default='STAR',  choices=['STAR', 'bowtie', 'bowtie2'],
                                      help="We recommend using STAR for genome alignment and Bowtie for transcriptome alignment.")
     group_mappingfilter.add_argument("-T", "--Threads", nargs="?", type=str, default='1',help="Used threads")
-    group_mappingfilter.add_argument("-mulMax", "--mulMax", nargs="?", type=str, default='1',help="Suppress all alignments if > <int> exist")
+    group_mappingfilter.add_argument("-mulMax", "--mulMax", nargs="?", type=int, default=1, 
+                                help="Suppress all alignments if > <int> exist (for bowtie and STAR); " + 
+                                "set to -1 to allow unlimited multimapping (eg., for spike-in references with similar sequences, only for bowtie)")
     group_mappingfilter.add_argument("-m", "--mismatch", nargs="?", type=str, default='2', help="Permitted mapping mismatches")
 
 

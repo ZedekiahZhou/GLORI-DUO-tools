@@ -41,7 +41,9 @@ parser.add_argument("-t", "--tools", nargs="?", type=str, default=sys.stdin,
                     help="We recommend using STAR for genome alignment and Bowtie for transcriptome alignment")
 parser.add_argument("-m", "--mismatch", nargs="?", type=int, default=2, help="Permitted mapping mismatches")
 parser.add_argument("-F", "--FilterN", nargs="?", type=str, default=0.5, help="The setting for the STAR parameter --outFilterScoreMinOverLread")
-parser.add_argument("-mulMax", "--mulMax", nargs="?", type=int, default=1, help="Suppress all alignments if > <int> exist")
+parser.add_argument("-mulMax", "--mulMax", nargs="?", type=int, default=1, 
+                    help="Suppress all alignments if > <int> exist (for bowtie and STAR); " + 
+                    "set to -1 to allow unlimited multimapping (eg., for spike-in references with similar sequences, only for bowtie)")
 parser.add_argument("--combine", "--combine", help="Whether mapping to transcriptome",action="store_true")
 parser.add_argument("--untreated", "--untreated", help="If the input is untreated",action="store_true")
 parser.add_argument("-pre", "--outname_prefix", nargs="?", type=str, default='default',help = "--outname_prefix")
@@ -123,7 +125,10 @@ def mapping_files(tool,fastq,reference,Threads,muta_N,fqname,outputdir,mulMax,fl
                 " | samtools sort -n -O SAM > " + outputfile + "_sorted.sam")
         run_cmd("mv -f " + outputfile + "_sorted.sam " + outputfile)
     elif tool == "bowtie":
-        para_0 = 'bowtie -k 1 -m '+ str(mulMax)
+        if mulMax == -1:
+            para_0 = 'bowtie -k 1'
+        else:
+            para_0 = 'bowtie -k 1 -m '+ str(mulMax)
         para_A = ' -v '+ str(muta_N)
         para_B = ' --best --strata -p ' + Threads
         para_C = ' -x '+ reference +" "+ fastq +' -S ' + outputfile
