@@ -39,7 +39,6 @@ for i in range(len(args.inputs)):
     # outer join samples
     if i == 0:
         tss_merged = tss
-        # Chr     Sites   Strand  Gene    CR      AGcov   Acov    Genecov Signal_Ratio    Ratio   Pvalue  P_adjust
     else:
         tss_merged = tss_merged.join(
             tss, suffix="_right",
@@ -79,10 +78,10 @@ tss_merged.write_csv(args.output+"_TSS_raw.bed.annotated.rmdup", separator="\t",
 
 
 # II. merged m6Am sites
-# Chr     Pos     Strand  Ref_base        Counts  TPM     geneID  txID    txBiotype       Dist
+# Chr     Pos     Strand  Base        Counts  TPM     geneID  txID    txBiotype       Dist
 # A       T       C       G       Next_pos_A      Next_pos_T      Next_pos_C      Next_pos_G      Next_pos
 # Signal_cov      AG_cov  Next_pos_AG     Signal_Ratio    AG_Ratio        Ctrl_Ratio      m6Am_Ratio      Pvalue  FDR
-m6Am_cols = ["Chr", "Pos", "Strand", "Ref_base", "geneID", "txID", "txBiotype", "Dist", 
+m6Am_cols = ["Chr", "Pos", "Strand", "Base", "geneID", "txID", "txBiotype", "Dist", 
              "AG_cov", "A", "Signal_Ratio", "AG_Ratio", "m6Am_Ratio", "Pvalue", "FDR"]
 if not args.untreated:
     print("Pool m6Am sites: ", flush=True)
@@ -100,7 +99,7 @@ if not args.untreated:
         else:
             m6Am_merged = m6Am_merged.join(
                 m6Am, suffix="_right",
-                on=["Chr", "Pos", "Strand", "Ref_base", "geneID", "txID", "txBiotype", "Dist"], 
+                on=["Chr", "Pos", "Strand", "Base", "geneID", "txID", "txBiotype", "Dist"], 
                 how="full", coalesce=True 
             ).with_columns(
                 AG_cov=pl.sum_horizontal("AG_cov", "AG_cov_right"),

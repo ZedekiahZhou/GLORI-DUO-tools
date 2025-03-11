@@ -7,6 +7,7 @@ import polars as pl
 from Bio.Seq import reverse_complement
 import multiprocessing
 
+
 def get_refer_base(key):
     global reference_genome
     chr, pos, strand = key
@@ -14,13 +15,15 @@ def get_refer_base(key):
         return reference_genome[chr][pos - 1]
     else:
         return reverse_complement(reference_genome[chr][pos -1])
-    
+
+
 class NextPos(dict):
     def __init__(self):
         super().__init__()  # Initialize as a dictionary
         self.update({"A": 0, "T": 0, "C": 0, "G": 0})  # Add default values
-    
-def pileup_bin(bin_chr, bin_start, bin_end, bin_df):
+
+
+def pileup_bin(chr, bin_start, bin_end, bin_df):
     global options
     print("[%s] Pileup bin %s:%d-%d" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
                                         bin_chr, bin_start, bin_end), flush=True)
@@ -90,42 +93,40 @@ def pileup_bin(bin_chr, bin_start, bin_end, bin_df):
                                             if read.is_reverse:
                                                 next_query_base = reverse_complement(next_query_base)
                                             if next_query_base in ("A", "T", "C", "G"):
-                                                # print("Add 1", flush=True)
                                                 res[ID]["Next_pos"][next_pos][next_query_base] += 1
         except ValueError:
             print("[%s] No bin %s:%d-%d in %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
                                         bin_chr, bin_start, bin_end, fbam), flush=True)
-
     return res
 
 
 if __name__ == "__main__":
     description = """
-    Count all unconverted A of each A sites in 5' regions downstream of each TSSs.
+    Pileup 5' ends of reads:
 
-    1. Use TSS list as input, 5' regions were defined as downstream <window_size> bp from TSSs
-    2. Reads with soft clipped in 5' end and reads with too many unconverted As (>=3, not including the first A in read 5' end) were excluded
-    3. Only reads starting from specific TSS were considered (eg. isform level)
+    1. reads with soft clip in 5' were excluded
+    2. reads with too many unconverted As (>=3, not including the first A in read 5' end) were excluded
+    3. use all A in downstream <window_size> bp or next A (if no A found in this window) as control
     """
 
-    parser = argparse.ArgumentParser(prog="isoform_5p_m6A",fromfile_prefix_chars='@',description=description,formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(prog="pileup_reads_5p",fromfile_prefix_chars='@',description=description,formatter_class=argparse.RawTextHelpFormatter)
     #Require
     group_required = parser.add_argument_group("Required")
     group_required.add_argument("-r","--ref", dest="references", nargs="+", required=True,help="reference fasta(s)")
     group_required.add_argument("-l","--list", dest="fTSS",required=True,
-                                help="\nTSS list file: usually *.TSS.passed of each sample from merge_multi_sample.py. \
-                                      \nFormat: Chr,Pos,Strand,Base,geneID,txID,txBiotype,Dist,Counts,TPM,...; separated by tab.")
+                                help="\nTSS list file: *_TSS_raw.bed.annotated.rmdup from anno_TSS.py. \
+                                      \nFormat: ID,Chr,Start,End,Counts,Strand,Base,TPM,txChr,txStart,txEnd,geneID,txID,txStrand,txTSS,geneBiotype,txBiotype,Priorities,Dist,absDist,...; separated by tab.")
     group_required.add_argument("-b","--bam", dest="fbams", nargs="+", required=True,help="input bam(s), sorted")
     group_required.add_argument("-o","--output", dest="output",required=True,help="output")
     # Optional
     group_optional = parser.add_argument_group("Optional")
-    group_optional.add_argument("-w", "--window", dest="window_size", type=int, default=100,
-                                help="downstream window size to count unconverted As (as control), default=100.")
+    group_optional.add_argument("-w", "--window", dest="window_size", default=30,
+                                help="downstream window size to count unconverted As (as control), default=30. If no A found in this window, then use the first A found downstream as control.")
     group_optional.add_argument("-s", "--step", dest="step_size", type=int, default=500000, 
                                 help="step size to process bam file, default=500000.")
     group_optional.add_argument("-p", "--processes", dest="processes", type=int, default=4,  
                                 help="number of processes to use, default=4.")
-    group_optional.add_argument("--maxAs", dest="max_allowed_As", type=int, default=3,
+    group_optional.add_argument("--maxAs", dest="max_allowed_As", default=3,
                             help="maximum allowed number of As in reads to be count as signal ones, default=3")
     options = parser.parse_args()
 
@@ -139,42 +140,44 @@ if __name__ == "__main__":
             reference_genome[seq.id] = str(seq.seq).upper()
             for bin_start in range(0, len(seq.seq), options.step_size):  # split reference into bins
                 RefBins.append((seq.id, bin_start, bin_start + options.step_size))
-
+    
     ## init site dict
     print("------ [%s] Initializing dict ..." % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
     tss = dict()
     with open(options.fTSS, "r") as fTSS:
-        next(fTSS)
         for line in fTSS:
             line = line.strip().split("\t")
-            chr, pos, strand, base = line[0], line[1], line[2], line[3]
+            chr, pos, strand, base = line[1], line[3], line[5], line[6]
+            if base.upper() != "A":
+                continue
 
             pos = int(pos)
             ID = (chr, pos, strand)
 
-            tss[ID] = {"Chr": chr, "Pos": pos, "Strand": strand, "Base": base,
-                       "geneID": line[4], "txID": line[5], "txBiotype": line[6], "Dist": line[7], 
-                       "Counts": line[8], "TPM": line[9]}
+            tss[ID] = {"Chr": chr, "Pos": pos, "Strand": strand, "Base": base,  
+                          "geneID": line[11], "txID": line[12], "txBiotype": line[16], "Dist": line[18],
+                          "Counts": line[4], "TPM": line[7]}
     
-    ## find downstream A sites
-    print("------ [%s] Finding downstream A sites ..." % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
+    ## find the position of next A 
+    print("------ [%s] Finding next As ..." % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
     with open(options.fTSS, "r") as fTSS:
-        next(fTSS)
         for line in fTSS:
             line = line.strip().split("\t")
-            chr, pos, strand, base = line[0], line[1], line[2], line[3]
+            chr, pos, strand, base = line[1], line[3], line[5], line[6]
+            if base.upper() != "A":
+                continue
 
             pos = int(pos)
             ID = (chr, pos, strand)
 
             # find next A
-            dnext = [] # a dict of next pos
+            dnext = []
             next_pos = pos
             idx = 0
             glen = len(reference_genome[chr])
 
             if strand == "+":
-                while idx < options.window_size:
+                while idx < options.window_size or not dnext:
                     next_pos += 1
                     if next_pos >= glen:
                         break
@@ -185,7 +188,7 @@ if __name__ == "__main__":
                     if next_base == "A":
                         dnext.append(next_pos)
             else:
-                while idx < options.window_size:
+                while idx < options.window_size or not dnext:
                     next_pos -= 1
                     if next_pos < 0:
                         break
@@ -199,7 +202,6 @@ if __name__ == "__main__":
             tss[ID]["Next_pos"] = dnext
 
     df = pl.from_pandas(pd.DataFrame.from_dict(tss, orient='index'))
-  
 
     # Step II: Pileup 
     print("------ [%s] Pileup 5p ends of reads ..." % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
@@ -225,17 +227,13 @@ if __name__ == "__main__":
 
     t2=time.time()
     print("------ [%s] Pileup time used: %.2f s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), t2-t1), flush=True)
-    
 
-    # # import pickle
-    # # # Write to a pickle file
-    # # with open('test.pkl', 'wb') as file:
-    # #     pickle.dump(output, file)
 
+    # write out
     with open(options.output, "w") as fout:
         col_names = ["Chr", "Pos", "Strand", "Base", "geneID", "txID", "txBiotype", "Dist", 
                      "Counts", "TPM", "A", "T", "C", "G"]
-        fout.write("\t".join(col_names +["Next_pos", "Next_pos_ATCG"]) + "\n")
+        fout.write("\t".join(col_names +["Next_pos_A", "Next_pos_T", "Next_pos_C", "Next_pos_G", "Next_pos"]) + "\n")
         for async_result in async_results:
             output = async_result.get()
             if output:
@@ -244,11 +242,8 @@ if __name__ == "__main__":
                     fout.write("\t".join(info)+"\t")  # information
 
                     dnext = output[ID]["Next_pos"]
-                    fout.write(";".join([str(next_pos) for next_pos in dnext])+";\t")
-                    for next_pos in dnext:
-                        fout.write(",".join(
-                            [str(dnext[next_pos]['A']), str(dnext[next_pos]['T']), 
-                            str(dnext[next_pos]['C']), str(dnext[next_pos]['G'])]) + ";")
-                    fout.write("\n")
+                    next_ATCG = [sum([dnext[next_pos][used_base] for next_pos in dnext]) for used_base in ["A", "T", "C", "G"]]
+                    fout.write("\t".join(next_ATCG)+"\t") # sum of all next pos
+                    fout.write(",".join([str(next_pos) for next_pos in dnext])+",\n")
 
     print("[%s] Done!" % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)

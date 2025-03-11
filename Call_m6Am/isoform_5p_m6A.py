@@ -17,10 +17,10 @@ def get_refer_base(key):
 
 if __name__ == "__main__":
     description = """
-    Calculate unconverted A counts in 5' regions downstream of each TSSs.
+    Count all unconverted A of each A sites in 5' regions downstream of each TSSs.
 
     1. Use TSS list as input, 5' regions were defined as downstream <window_size> bp from TSSs
-    2. Reads with soft clipped in 5' end and reads with too many unconverted As (>=3) were excluded
+    2. Reads with soft clipped in 5' end and reads with too many unconverted As (>=3, not including the first A in read 5' end) were excluded
     3. Only reads starting from specific TSS were considered (eg. isform level)
     """
 
@@ -28,7 +28,9 @@ if __name__ == "__main__":
     #Require
     group_required = parser.add_argument_group("Required")
     group_required.add_argument("-r","--ref", dest="references", nargs="+", required=True,help="reference fasta(s)")
-    group_required.add_argument("-l","--list", dest="fTSS",required=True,help="TSS list file")
+    group_required.add_argument("-l","--list", dest="fTSS",required=True,
+                                help="\nTSS list file: usually *.TSS.passed of each sample from merge_multi_sample.py. \
+                                      \nFormat: Chr,Pos,Strand,Base,geneID,txID,txBiotype,Dist,Counts,TPM,...; separated by tab.")
     group_required.add_argument("-b","--bam", dest="fbams", nargs="+", required=True,help="input bam(s), sorted")
     group_required.add_argument("-o","--output", dest="output",required=True,help="output")
     # Optional
@@ -64,7 +66,7 @@ if __name__ == "__main__":
             pos = int(pos)
             ID = (chr, pos, strand)
 
-            output[ID] = {"Chr": chr, "Pos": pos, "Strand": strand, "Ref_base": base,
+            output[ID] = {"Chr": chr, "Pos": pos, "Strand": strand, "Base": base,
                           "geneID": line[4], "txID": line[5], "txBiotype": line[6], "Dist": line[7], 
                           "Counts": line[8], "TPM": line[9],
                           "A": 0, "T": 0, "C": 0, "G": 0}

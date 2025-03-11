@@ -12,20 +12,6 @@ History:
 parser = argparse.ArgumentParser(description="call m6Am sites from AGcounts file")
 parser.add_argument("-i", "--input", type=str, required=True, help="AGcounts file from pileup_reads5p.py")
 parser.add_argument("-o", "--output", type=str, required=False, help="output file name")
-# parser.add_argument("-C", "--Acov", type=int, default=5, help='minimum A coverage for m6Am sites, default is 5')
-# parser.add_argument("-adp", "--FDR", type=float, default=0.05, help="FDR cutoff, default is 0.05")
-# parser.add_argument("-s", "--Signal_Ratio", type=float, default=0.8, 
-#                     help="minimum ratio of signal reads (eg. reads with unconverted As less than 3), default is 0.8")
-# parser.add_argument("-R", "--AG_Ratio", type=float, default=0.8, 
-#                     help="minimum ratio of (A+G reads)/total in this sites, default is 0.8")
-
-# parser.add_argument("-c", "--cov", type=int, default=15, help='minimum A+G coverage for TSS, default is 15')
-# parser.add_argument("--tpm", type=float, default=1.0, help="minimum TPM value for TSS, default is 1.0")
-# parser.add_argument("--absDist", type=int, default=1000, 
-#                     help="maximum absolute distance to any annotated TSS from GTF file, default is 1000")
-# parser.add_argument("--prop", type=float, default=0.05, help="minimum proportion relative to the total TPM of a gene, default is 0.05")
-# parser.add_argument("--zscore", type=float, default=1.0, 
-#                     help="minimum Z-score (calculated within a gene) for TSS, default is 1.0")
 args = parser.parse_args()
 
 # input and output
@@ -69,20 +55,5 @@ df = df.with_columns(
     .alias("FDR")  # BH adjusted
 )
 
+# columns order inherited from input, add columns Signal_cov, ...
 df.write_csv(args.output, separator="\t")
-
-# Move all filtering to merge_multisam_m6Am.py
-# # filter TSS
-# df_clean = df_rmdup.filter(
-#     (pl.col("Counts") >= args.cov) & (pl.col("TPM") >= args.tpm) & (pl.col("absDist") <= args.absDist) & \
-#             (pl.col("zscore") > args.zscore) & (pl.col("relSum") >= args.prop)
-# )
-# df_clean.write_csv(args.output, separator="\t",null_value=".")
-
-# # filtering m6Am
-# used_col = ['Chr', 'Pos', 'Strand', 'A', 'AG_cov', 'm6Am_Ratio', 'Pvalue', 'FDR', 
-#             'Ref_base', 'Counts', 'TPM', 'geneID', 'txID', 'txBiotype', 'Dist', "Signal_Ratio"]
-# df2 = df.filter(
-#     (pl.col("A") >= args.Acov) & (pl.col("FDR") < args.FDR) & (pl.col("Signal_Ratio") >= args.Signal_Ratio) & (pl.col("AG_Ratio") >= args.AG_Ratio)
-# ).select(pl.col(used_col))
-# df2.write_csv(args.output, separator="\t")

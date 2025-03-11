@@ -139,7 +139,7 @@ if not args.untreated:
             pl.col("Dist").fill_null(float('inf')),
         ).select(
             pl.col("Chr", "Pos", "Strand"),
-            pl.col("Ref_base").alias("Base"),
+            pl.col("Base"),
             pl.col("geneID", "txID", "txBiotype", "Dist"),
             pl.col("AG_cov").alias("AGcov"),
             pl.col("A").alias("Acov"),

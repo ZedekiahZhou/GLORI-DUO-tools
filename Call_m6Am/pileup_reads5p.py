@@ -20,7 +20,7 @@ if __name__ == "__main__":
     Pileup 5' ends of reads:
 
     1. reads with soft clip in 5' were excluded
-    2. reads with too many unconverted As (>=3) were excluded
+    2. reads with too many unconverted As (>=3, not including the first A in read 5' end) were excluded
     3. use all A in downstream <window_size> bp or next A (if no A found in this window) as control
     """
 
@@ -28,7 +28,9 @@ if __name__ == "__main__":
     #Require
     group_required = parser.add_argument_group("Required")
     group_required.add_argument("-r","--ref", dest="references", nargs="+", required=True,help="reference fasta(s)")
-    group_required.add_argument("-l","--list", dest="fTSS",required=True,help="TSS list file")
+    group_required.add_argument("-l","--list", dest="fTSS",required=True,
+                                help="\nTSS list file: *_TSS_raw.bed.annotated.rmdup from anno_TSS.py. \
+                                      \nFormat: ID,Chr,Start,End,Counts,Strand,Base,TPM,txChr,txStart,txEnd,geneID,txID,txStrand,txTSS,geneBiotype,txBiotype,Priorities,Dist,absDist,...; separated by tab.")
     group_required.add_argument("-b","--bam", dest="fbams", nargs="+", required=True,help="input bam(s), sorted")
     group_required.add_argument("-o","--output", dest="output",required=True,help="output")
     # Optional
@@ -60,9 +62,9 @@ if __name__ == "__main__":
             pos = int(pos)
             ID = (chr, pos, strand)
 
-            output[ID] = {"Chr": chr, "Pos": pos, "Strand": strand, "Ref_base": base, "Counts": line[4], "TPM": line[7], 
+            output[ID] = {"Chr": chr, "Pos": pos, "Strand": strand, "Base": base,  
                           "geneID": line[11], "txID": line[12], "txBiotype": line[16], "Dist": line[18],
-                          "A": 0, "T": 0, "C": 0, "G": 0}
+                          "Counts": line[4], "TPM": line[7], "A": 0, "T": 0, "C": 0, "G": 0}
     
     ## find the position of next A 
     print("------ [%s] Finding next As ..." % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
@@ -162,5 +164,10 @@ if __name__ == "__main__":
                                         if next_query_base in ("A", "T", "C", "G"):
                                             output[ID]["Next_pos_"+next_query_base] += 1
                     
-df = pl.from_pandas(pd.DataFrame.from_dict(output, orient='index'))
-df.write_csv(options.output, separator='\t')
+    # reformat data columns and save to file
+    df = pl.from_pandas(pd.DataFrame.from_dict(output, orient='index'))
+    info_col = ["Chr", "Pos", "Strand", "Base", "geneID", "txID", "txBiotype", "Dist"]
+    data_col = ["A", "T", "C", "G", "Next_pos_A", "Next_pos_T", "Next_pos_C", "Next_pos_G", "Next_pos"]
+    df.select(
+        pl.col(info_col+data_col)
+    ).write_csv(options.output, separator='\t')
