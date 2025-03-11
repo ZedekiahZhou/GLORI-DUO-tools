@@ -198,7 +198,7 @@ def fun_m6Am(bam, prx, args):
     # annotate TSS
     ftss_anno=site_dir + prx + "_TSS_raw.bed.annotated"
     run_cmd("bedtools intersect -a " + ftss + " -b " + " ".join(args.tssanno) + " -s -wa -wb -loj > " + ftss_anno)
-    run_cmd("python " + args.DUOdir + "/Call_m6Am/anno_TSS.py -i " + ftss_anno)
+    run_cmd("python " + args.DUOdir + "/Call_m6Am/anno_TSS.py -i " + ftss_anno) # output to {ftss_anno}.rmdup
 
     if not args.untreated:
         # pile ATCG

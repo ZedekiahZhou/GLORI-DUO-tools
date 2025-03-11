@@ -41,7 +41,7 @@ def run_command(file,combine,untreated,rvs_fac,Threads):
     finalbam = outputprefix + "_merged.sorted.bam"  # merged, sorted, final bam
 
     mapping_1 = "python "+DUOdir+"mapping_reads.py -i " + DUOdir + " -q "+ file +" -p "+ Threads + " -f "+ genome+ ' --FilterN '+FilterN
-    mapping_2 = " -mulMax " + mulMax + " -t " + tool + " -m " + mismatch +" -pre "+ prx+ " -o " + outputdir
+    mapping_2 = " -mulMax " + str(mulMax) + " -t " + tool + " -m " + mismatch +" -pre "+ prx+ " -o " + outputdir
     if untreated:
         file3 = outputprefix + "_un_s.bam"
         file5 = outputprefix + "_s.bam"
