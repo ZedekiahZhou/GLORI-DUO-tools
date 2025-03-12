@@ -126,15 +126,14 @@ def mapping_files(tool,fastq,reference,Threads,muta_N,fqname,outputdir,mulMax,fl
         run_cmd("mv -f " + outputfile + "_sorted.sam " + outputfile)
     elif tool == "bowtie":
         if mulMax == -1:
-            para_0 = 'bowtie -k 1'
+            # ommit -m and --strata to allow unlimited multimapping
+            para_0 = 'bowtie -k 1 -v '+ str(muta_N) + ' --best -p ' + Threads 
         else:
-            para_0 = 'bowtie -k 1 -m '+ str(mulMax)
-        para_A = ' -v '+ str(muta_N)
-        para_B = ' --best --strata -p ' + Threads
-        para_C = ' -x '+ reference +" "+ fastq +' -S ' + outputfile
+            para_0 = 'bowtie -k 1 -m '+ str(mulMax) + ' -v '+ str(muta_N) + ' --best --strata -p ' + Threads
+        para_A = ' -x '+ reference +" "+ fastq +' -S ' + outputfile
         para_unmap = ' --un ' + unmapfastq
         para_end = ' 2>' + outputfile +'.output'
-        command = para_0+para_A+para_B+para_C+para_unmap+para_end
+        command = para_0+para_A+para_unmap+para_end
         run_cmd(command)
         run_cmd("samtools view -F " + flag + " -@ " + Threads+" -h " + outputfile +
                 " | samtools sort -n -O SAM > " + outputfile + "_sorted.sam")

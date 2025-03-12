@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# compare with isoform_tp_m6A_multiprocessing.py:
+# 1. default downstream 30 nt or next A as contrl
+# 2. different input file, different output format
+# 3. only process A started reads, not all TSS
 
 from Bio import SeqIO
 import argparse, time, pysam
@@ -23,7 +27,7 @@ class NextPos(dict):
         self.update({"A": 0, "T": 0, "C": 0, "G": 0})  # Add default values
 
 
-def pileup_bin(chr, bin_start, bin_end, bin_df):
+def pileup_bin(bin_chr, bin_start, bin_end, bin_df):
     global options
     print("[%s] Pileup bin %s:%d-%d" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), 
                                         bin_chr, bin_start, bin_end), flush=True)
@@ -242,7 +246,7 @@ if __name__ == "__main__":
                     fout.write("\t".join(info)+"\t")  # information
 
                     dnext = output[ID]["Next_pos"]
-                    next_ATCG = [sum([dnext[next_pos][used_base] for next_pos in dnext]) for used_base in ["A", "T", "C", "G"]]
+                    next_ATCG = [str(sum([dnext[next_pos][used_base] for next_pos in dnext])) for used_base in ["A", "T", "C", "G"]]
                     fout.write("\t".join(next_ATCG)+"\t") # sum of all next pos
                     fout.write(",".join([str(next_pos) for next_pos in dnext])+",\n")
 
