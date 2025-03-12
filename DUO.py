@@ -203,17 +203,12 @@ def fun_m6Am(bam, prx, args):
     if not args.untreated:
         # pile ATCG
         fAGcount=site_dir + prx + "_AGcount.tsv"
-        run_cmd("python " + args.DUOdir + "/Call_m6Am/pileup_reads5p.py -r " + " ".join(args.reference2) + \
+        run_cmd("python " + args.DUOdir + "/Call_m6Am/pileup_reads5p_multiprocessing.py -p " + str(args.threads) + \
+                " -r " + " ".join(args.reference2) + \
                 " -l " + ftss_anno + ".rmdup -o " + fAGcount + " -b " + bam)
 
         # call m6Am
         run_cmd("python " + args.DUOdir + "/Call_m6Am/m6Am_caller.py -i " + fAGcount)
-        # fm6Am=site_dir + prx + "_m6Am_sites.tsv"
-        # run_cmd("python " + args.DUOdir + "/Call_m6Am/m6Am_caller.py -i " + fAGcount + " -o " + fm6Am + \
-        #     " -C " + str(args.Acov) + " -adp " + str(args.FDR) + \
-        #     " -s " + str(args.Signal_Ratio) + " -R " + str(args.AG_Ratio) + \
-        #     " -c " + str(args.cov) + " --tpm " + str(args.tpm) + \
-        #     " --absDist " + str(args.absDist) + " --prop " + str(args.prop) + " --zscore " + str(args.zscore))
         
         #run_cmd("mv " + fAGcount + " " + site_dir + prx + "_m6Am_sites_raw.tsv " + site_dir + "/intermediate/")
     
