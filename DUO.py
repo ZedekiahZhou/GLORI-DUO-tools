@@ -27,7 +27,12 @@ group_global.add_argument("--clean_fq", type=str, help="clean fastq file for map
 group_global.add_argument("--bam", type=str, help="merged sorted bam files")
 group_global.add_argument("--prx", type=str, help="output file prefix")
 group_global.add_argument("--DUOdir", type=str, default=os.path.dirname(__file__)+"/", help="directory of DUO-tools")
-group_global.add_argument("-o", "--outdir", type=str, default="./", help="output directory, default is ./")
+group_global.add_argument("-o", "--outdir", type=str, default="./",
+                          help="Default is current directory. \
+                            Outputs of preprocessing will be saved in {outdir}/02_Clean/; \
+                            outputs of fastqc will be saved in {outdir}/fastq/; \
+                            outputs of mapping and calling will be saved in {outdir}/03_Sites/; \
+                            and outputs of QC will be saved in {outdir}/03_Sites/QC/.")
 group_global.add_argument("-p", "--threads", type=int, default=20, help="threads used, default is 20")
 group_global.add_argument("--test", action="store_true", help="only print commands to run")
 
@@ -75,7 +80,7 @@ group_m6Am.add_argument("--prop", type=float, default=0.05,
                         help="[m6Am] minimum proportion relative to the total TPM of a gene")
 group_m6Am.add_argument("--zscore", type=float, default=1.0,
                         help="[m6Am] minimum Z-score (calculated within a gene) for TSS, default is 1.0")
-group_m6Am.add_argument("-ba", "--baseanno", type=str, help="[m6A] Annotations at single-base resolution")
+group_m6Am.add_argument("-ba", "--baseanno", type=str, default='None',help="[m6A] Annotations at single-base resolution")
 group_m6Am.add_argument("-r", "--methyl_Ratio", type = float, default=0.1, help="[m6A] minimum m6A level")
 
 group_QC = parser.add_argument_group("QC")
@@ -150,12 +155,20 @@ def fun_mapping(clean_fq, prx, args):
     print("\n[%s] Mapping ========" % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
 
     site_dir=args.outdir + "/03_Sites/"
+    if args.reference is None:
+        raise ValueError("Please provide the plus strand reference (-f) file for mapping.")
+    if args.transref is None:
+        raise ValueError("Please provide the transcriptome reference (-Tf) file for mapping.")
     cmd_prx="python " + args.DUOdir + "/Mapping/Run_GLORI_Mapping.py -q " + clean_fq + " -T " + str(args.threads) + \
         " -f " + args.reference + " -pre " + prx + " -o " + site_dir
     if args.untreated:
         cmd=cmd_prx + " -Tf " + args.transref + " -a " + args.anno + " --combine --untreated"
         run_cmd(cmd)
     else:
+        if args.reference2 is None:
+            raise ValueError("Please provide the unchanged reference (-f2) file for mapping GLORI treated samples.")
+        if args.rvsref is None:
+            raise ValueError("Please provide the minus strand reference (-rvs) file for mapping GLORI treated samples.")
         cmd=cmd_prx + " -f2 " + " ".join(args.reference2) + " -rvs " + args.rvsref+ " -Tf " + args.transref + \
             " -a " + args.anno + " --combine --rvs_fac"
         run_cmd(cmd)

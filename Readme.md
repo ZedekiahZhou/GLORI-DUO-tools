@@ -13,3 +13,6 @@ All changes compared to the original GLORI-tools:
 3. STAR maaping: add "--readNameSeparator ' '" to support BGI read names (which contain '/')
 4. Fix the FDR calculation steps
 5. split the main steps, allowing starting from intermediate files
+
+# 250314
+1. 修改DUO.py的默认输出位置：site_dir和clean_dir
