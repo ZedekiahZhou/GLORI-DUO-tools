@@ -371,9 +371,11 @@ def main(args):
                     prx=re.match("(.*/)?([^/]+)_merged.sorted.bam$", args.bam).group(2)
                 else:
                     prx=args.prx
-            bam=args.bam
+            if bam is None:
+                bam=args.bam
         else:
-            bam=args.outdir + "/03_Sites/" + prx + "_merged.sorted.bam"
+            if bam is None:
+                bam=args.outdir + "/03_Sites/" + prx + "_merged.sorted.bam"
         fun_QC(bam, prx, args)
 
     print("\n[%s] Done! ========" % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
