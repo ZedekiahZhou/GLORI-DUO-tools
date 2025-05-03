@@ -134,7 +134,9 @@ def fun_pre(raw_fq, prx, args):
     clean_fq=clean_dir + prx + "_clean.fq"
     tag_info=clean_dir + prx + "_rmtag.info"
     if args.tag_seq.lower() == "none":
-        run_cmd("gunzip -c " + rmdup_fq + " > " + clean_fq)    
+        # only remove reads shorter than min_len
+        cmd='cutadapt -j 0 -m ' + str(args.min_len) + ' -o ' + clean_fq + ' ' + rmdup_fq
+        run_cmd(cmd)
     else:
         cmd='cutadapt -j 0 -g "' + args.tag_seq + ';rightmost" -m ' + str(args.min_len) + \
             ' -O ' + str(len(args.tag_seq)) + ' -e 0.2 -o ' + clean_fq + ' --info-file ' + tag_info + ' ' + rmdup_fq
@@ -363,6 +365,10 @@ def main(args):
         fun_m6A(bam, prx, args)
     
     if "QC" in module:
+        try:
+            bam
+        except NameError:
+            bam=None
         if prx is None:  # begin with QC step
             if args.bam is None:
                 raise ValueError("Bam files must be provided if beginning with the QC step!")
