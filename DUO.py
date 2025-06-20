@@ -12,6 +12,23 @@ ToDo:
 
 import argparse, subprocess, re, os, time, sys
 
+def parse_unit_value(value_str):
+    unit_map = {
+        'K': 1000,
+        'M': 1000000,
+        'G': 1000000000,
+    }
+
+    if value_str[-1].upper() in unit_map:
+        unit = value_str[-1].upper()
+        number = float(value_str[:-1])
+        return int(number * unit_map[unit])
+    else:
+        try:
+            return int(value_str)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f"Invalid argument '{value_str}': must be a numeric value with optional unit (K, M, G).")
+
 parser = argparse.ArgumentParser(description="DUO-tools for detecting m6Am sites from DUO-seq data")
 
 group_global = parser.add_argument_group("Global")
@@ -59,7 +76,7 @@ group_mapping.add_argument("-Tf", "--transref", nargs="?", help="Index file for 
 group_mapping.add_argument("-a", "--anno", nargs="?", help="Annotation file within exons")
     
 group_m6Am = parser.add_argument_group("Call m6Am or m6A")
-group_m6Am.add_argument("-ds", "--ds2N", type=int, default=None, 
+group_m6Am.add_argument("-ds", "--ds2N", type=parse_unit_value, default=None, 
                         help="[Both] Downsample the merged sorted bam files to N reads, default is no downsample.")
 
 group_m6Am.add_argument("-c", "--cov", type=int, default=15, 
