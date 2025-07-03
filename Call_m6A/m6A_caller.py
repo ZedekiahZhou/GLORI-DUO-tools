@@ -119,7 +119,10 @@ def call_m6A(line, col):
             
             # hypothesis testing of sites
             if options.method == "binomial":
-                pvalue = scipy.stats.binom_test(A_count_col, n=AG_col, alternative='greater', p=nonCR)
+                try:
+                    pvalue = scipy.stats.binom_test(A_count_col, n=AG_col, alternative='greater', p=nonCR)
+                except:
+                    pvalue = scipy.stats.binomtest(A_count_col, n=AG_col, alternative='greater', p=nonCR).pvalue
             elif options.method == "fisher":
                 pass
             elif options.method == "poisson":
