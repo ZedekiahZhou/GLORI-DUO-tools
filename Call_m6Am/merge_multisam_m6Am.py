@@ -50,7 +50,7 @@ parser.add_argument("-adp", "--FDR", type=float, default=0.05,
                     help="FDR cutoff (default: 0.05)")
 parser.add_argument("-R", "--AG_Ratio", type=float, default=0.8, 
                     help="minimum ratio of (A+G reads)/total in this sites (default: 0.8)")
-parser.add_argument("--no_persample", action="store_true", help="do notwrite out passed sites for each sample")
+parser.add_argument("--persample", action="store_true", help="write out passed sites for each sample")
 args = parser.parse_args()
 
 
@@ -84,7 +84,7 @@ for i in range(len(args.inputs)):
     )
 
     # write out passed tss for each sample
-    if not args.no_persample:
+    if args.persample:
         tss.select(
             pl.col(info_col+data_col+["Passed"])
         ).filter(pl.col("Passed")).write_csv(outdir + "/" + prx[i] + "_" + outprx + ".TSS.passed", separator='\t')
@@ -149,7 +149,7 @@ if not args.untreated:
         )
 
         # write out passed tss for each sample !!!!!
-        if not args.no_persample:
+        if args.persample:
             m6Am.filter(pl.col("Passed")).write_csv(outdir + "/" + prx[i] + "_" + outprx + ".m6Am.passed", separator='\t')
 
         # outer join all

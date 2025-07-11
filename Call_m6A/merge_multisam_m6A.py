@@ -27,7 +27,7 @@ parser.add_argument("-r", "--methyl_Ratio", type = float, default=0.1,
                     help="minimum m6A level (default: 0.1)")
 parser.add_argument("-adp", "--FDR", type=float, default=0.05, 
                     help="FDR cutoff (default: 0.05)")
-parser.add_argument("--no_persample", action="store_true", help="do notwrite out passed sites for each sample")
+parser.add_argument("--persample", action="store_true", help="write out passed sites for each sample")
 parser.add_argument("--skipStep1", action="store_true", 
                 help="skip Step1, the merged sites list \{output\}.used must exists!")
 
@@ -65,7 +65,7 @@ if not args.skipStep1:
         )
 
         # write out passed sites for each sample
-        if not args.no_persample:
+        if args.persample:
             df.filter(pl.col("Passed")).write_csv(outdir + "/" + prx[i] + "_" + outprx + ".m6A.passed", separator='\t')
 
         # global m6A ratio using A sites in each sample, respectively
