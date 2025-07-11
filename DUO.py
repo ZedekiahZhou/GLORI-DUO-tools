@@ -67,6 +67,9 @@ group_preprocessing.add_argument("--fastqc", dest="fastqc", type=bool, default=T
 group_preprocessing.add_argument("--tag_seq", dest="tag_seq", type=str, default="TGACGCTGCCGACGATC", 
                                  help="tag sequence ligated to 5' ends of TSS, default is TGACGCTGCCGACGATC. \
                                     Skip tag removal if set to 'none'.")
+group_preprocessing.add_argument("--keep_tag_info", action="store_true", 
+                                 help="keep the information file about where tags were found for each reads, \
+                                    see 'cutadapt --info-file' for more details.")
 
 group_mapping = parser.add_argument_group("Mapping")
 group_mapping.add_argument("-f", "--reference", nargs="?", help="Index file for the plus strand of the genome")
@@ -148,7 +151,7 @@ def fun_pre(raw_fq, prx, args):
             " -z -o " + rmdup_fq)
 
     # remove tag
-    clean_fq=clean_dir + prx + "_clean.fq"
+    clean_fq=clean_dir + prx + "_clean.fq.gz"
     tag_info=clean_dir + prx + "_rmtag.info"
     if args.tag_seq.lower() == "none":
         # only remove reads shorter than min_len
@@ -156,7 +159,9 @@ def fun_pre(raw_fq, prx, args):
         run_cmd(cmd)
     else:
         cmd='cutadapt -j 0 -g "' + args.tag_seq + ';rightmost" -m ' + str(args.min_len) + \
-            ' -O ' + str(len(args.tag_seq)) + ' -e 0.2 -o ' + clean_fq + ' --info-file ' + tag_info + ' ' + rmdup_fq
+            ' -O ' + str(len(args.tag_seq)) + ' -e 0.2 -o ' + clean_fq + ' ' + rmdup_fq
+        if args.keep_tag_info:
+            cmd = cmd + ' --info-file ' + tag_info
         if args.mode == "m6Am":
             cmd = cmd + ' --discard-untrimmed'
         run_cmd(cmd)
@@ -345,12 +350,12 @@ def main(args):
                 raise ValueError("Clean fastq files must be provided if beginning with the mapping step!")
             else:
                 if args.prx is None:
-                    prx=re.match("(.*/)?([^/]+)_clean.fq$", args.clean_fq).group(2)
+                    prx=re.match("(.*/)?([^/]+)_clean.fq(.gz)?$", args.clean_fq).group(2)
                 else:
                     prx=args.prx
             clean_fq=args.clean_fq
         else:
-            clean_fq=args.outdir + "/02_Clean/" + prx + "_clean.fq"
+            clean_fq=args.outdir + "/02_Clean/" + prx + "_clean.fq.gz"
         fun_mapping(clean_fq, prx, args)
 
     if "call_m6Am" in module:

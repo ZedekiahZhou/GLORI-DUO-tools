@@ -152,6 +152,9 @@ def mapping_files(tool,fastq,reference,Threads,muta_N,fqname,outputdir,mulMax,fl
         para_E = " --outFileNamePrefix " + outputfile[:-3] + " --readFilesIn " + fastq
         para_unmap = " --outSAMunmapped Within --outReadsUnmapped Fastx"
         line_command = para_0+para_g+para_A+para_B+para_B_2+para_B_3+para_C+para_D+para_E + para_unmap
+        # check if input if gzipped
+        if fastq.endswith('.gz'):
+            line_command += " --readFilesCommand 'zcat'"
         run_cmd(line_command)
         run_cmd("samtools view -F " + flag + " -@ " + Threads+" -h " + outputfile[:-3] + "Aligned.out.bam " + 
                 "| samtools sort -n -O SAM > " + outputfile)
@@ -175,10 +178,10 @@ if __name__ == "__main__":
     step = 10000
     global change_fac,fqname2
     change_fac = 'AG'
-    if outname_prx != 'default':
-        fqname = outname_prx
-    else:
-        fqname = "_".join(os.path.basename(fastq).split(".")[:-1])
+    # if outname_prx != 'default':
+    #     fqname = outname_prx
+    # else:
+    #     fqname = "_".join(os.path.basename(fastq).split(".")[:-1])
     outputdir2 = outputdir+"/"
     if os.path.exists(outputdir2):
         pass
@@ -209,7 +212,10 @@ if __name__ == "__main__":
             sys.stderr.write("[%s] change to A>G...\n" % strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
             print("\n---- [%s] Change A to G " % strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
             subprocess.call("rm -f " + changefastq + " " + output_bed + " 2>/dev/null",shell=True)
-            cmd = 'awk -f ' + DUOdir + 'AtoG.awk changefastq="' + changefastq + '" ' + fastq + ' > ' + output_bed
+            if fastq.endswith('.gz'):
+                cmd = 'zcat ' + fastq +' | awk -f ' + DUOdir + 'AtoG.awk changefastq="' + changefastq + '" > ' + output_bed
+            else:
+                cmd = 'awk -f ' + DUOdir + 'AtoG.awk changefastq="' + changefastq + '" ' + fastq + ' > ' + output_bed
             run_cmd(cmd)
 
             print("---- [%s] Sort bed " % strftime("%Y-%m-%d %H:%M:%S", time.localtime()), flush=True)
