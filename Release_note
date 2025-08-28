@@ -1,3 +1,9 @@
+Date: 2025-08-06
+
+1. make "merge_multisam_m6A(m).py" compatible with *.gz input;
+2. gzip output files;
+
+
 Version: 1.0.1
 Date: 2024-10-24
 

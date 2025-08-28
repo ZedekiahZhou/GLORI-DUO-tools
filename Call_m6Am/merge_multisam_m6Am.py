@@ -55,7 +55,7 @@ args = parser.parse_args()
 
 
 if args.prx is None:
-    prx=[re.match("(.*/)?([^/]+)_TSS_raw.bed.annotated.rmdup$", s).group(2) for s in args.inputs]
+    prx=[re.match("(.*/)?([^/]+)_TSS_raw.bed.annotated.rmdup(.gz)?$", s).group(2) for s in args.inputs]
 else:
     prx=args.prx
 

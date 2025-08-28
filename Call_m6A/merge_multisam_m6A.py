@@ -34,7 +34,7 @@ parser.add_argument("--skipStep1", action="store_true",
 
 args = parser.parse_args()
 if args.prx is None:
-    prx=[re.match("(.*/)?([^/]+).totalm6A.FDR.csv$", s).group(2) for s in args.inputs]
+    prx=[re.match("(.*/)?([^/]+).totalm6A.FDR.csv(.gz)?$", s).group(2) for s in args.inputs]
 else:
     prx=args.prx
 outdir = str(Path(args.output).parent)
