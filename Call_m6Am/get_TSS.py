@@ -40,6 +40,7 @@ if __name__ == "__main__":
     ## init site dict
     output = {}
     total = 0
+    mapped = 0
 
     # Pileup 
     for fbam in options.fbams:
@@ -61,6 +62,7 @@ if __name__ == "__main__":
                     
                     output[ID]["Counts"] += 1
                     total += 1
+                mapped += 1
         
     # get TPM
     with open(options.output, "w") as fout:
@@ -68,4 +70,6 @@ if __name__ == "__main__":
             ID = key[0] + "_" + str(key[1]) + "_" + key[2]
             fout.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(key[0], key[1]-1, key[1], ID, values["Counts"], key[2], 
                                                                  values["Ref_base"], round(values["Counts"]/total*1000000, 3)))
-        
+
+    print("Mapped reads: {}, Non-softclipped reads: {}, Non-softclipped rate: {}%".
+          format(total, mapped, round(total/mapped*100, 3)))    

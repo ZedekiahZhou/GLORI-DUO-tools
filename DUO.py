@@ -255,7 +255,8 @@ def fun_m6Am(bam, prx, args):
 
     # gzip
     run_cmd("pigz -p " + str(args.threads) + " " + site_dir + prx + "_m6Am_sites_raw.tsv")
-    run_cmd("pigz -p " + str(args.threads) + " " + site_dir + prx + "_ds_TSS_raw.bed.annotated.rmdup")
+    run_cmd("pigz -p " + str(args.threads) + " " + site_dir + prx + "_TSS_raw.bed.annotated.rmdup")
+    run_cmd("pigz -p " + str(args.threads) + " " + fAGcount)
     
 
 def fun_m6A(bam, prx, args):
