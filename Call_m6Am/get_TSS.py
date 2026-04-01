@@ -71,5 +71,5 @@ if __name__ == "__main__":
             fout.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(key[0], key[1]-1, key[1], ID, values["Counts"], key[2], 
                                                                  values["Ref_base"], round(values["Counts"]/total*1000000, 3)))
 
-    print("Mapped reads: {}, Non-softclipped reads: {}, Non-softclipped rate: {}%".
+    print("Non-softclipped reads: {}, Mapped reads: {}, Non-softclipped rate: {}%".
           format(total, mapped, round(total/mapped*100, 3)))    

@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     if not output:
         output = input[:-3] + "tbl"
-    output_longest = output[:-4] + "longest.tbl"
+    output_longest = output + ".longest"
 
     with open(input, "r") as gtf:
         line = gtf.readline()
