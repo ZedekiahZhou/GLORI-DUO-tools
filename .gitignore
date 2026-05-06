@@ -1,5 +1,8 @@
 test/
 dep/
+config/
 .vscode/
 .ipynb_checkpoints/
-Call_m6Am/pileup_reads5p_dep.py
+TODO.md
+Run_DUO_demo.sh
+Release_note
