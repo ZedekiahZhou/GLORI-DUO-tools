@@ -251,9 +251,9 @@ def fun_m6Am(bam, prx, args):
     #run_cmd("mv " + ftss_anno + ".rmdup " + site_dir + "/intermediate/")
 
     # gzip
-    run_cmd("pigz -p " + str(args.threads) + " " + site_dir + prx + "_m6Am_sites_raw.tsv")
-    run_cmd("pigz -p " + str(args.threads) + " " + site_dir + prx + "_TSS_raw.bed.annotated.rmdup")
-    run_cmd("pigz -p " + str(args.threads) + " " + fAGcount)
+    run_cmd("pigz -f -p " + str(args.threads) + " " + site_dir + prx + "_m6Am_sites_raw.tsv")
+    run_cmd("pigz -f -p " + str(args.threads) + " " + site_dir + prx + "_TSS_raw.bed.annotated.rmdup")
+    run_cmd("pigz -f -p " + str(args.threads) + " " + fAGcount)
     
 
 def fun_m6A(bam, prx, args):
@@ -288,7 +288,7 @@ def fun_m6A(bam, prx, args):
         " -pre " + prx + " -o " + site_dir)
     
     fsites=site_dir + prx + ".totalm6A.FDR.csv"
-    run_cmd("pigz -p " + str(args.threads) + " " + fsites)
+    run_cmd("pigz -f -p " + str(args.threads) + " " + fsites)
 
 
 def fun_QC(bam, prx, args):
