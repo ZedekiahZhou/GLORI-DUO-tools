@@ -144,8 +144,10 @@ def fun_pre(raw_fq, prx, args):
 
     # remove duplicates and umi
     rmdup_fq=clean_dir + prx + "_rmdup.fq.gz"
-    run_cmd("seqkit rmdup -j 10 -s " + trimmed_fq + " | fastx_trimmer -Q 33 -f " + str(args.umi5+1) + \
-            " -z -o " + rmdup_fq)
+    # run_cmd("seqkit rmdup -j 10 -s " + trimmed_fq + " | fastx_trimmer -Q 33 -f " + str(args.umi5+1) + \
+    #         " -z -o " + rmdup_fq)
+    run_cmd("seqkit rmdup -j 10 -s " + trimmed_fq + " | seqkit subseq -j 10 -r " + str(args.umi5 + 1) + ":-1" + \
+            " -o " + rmdup_fq)
 
     # remove tag
     clean_fq=clean_dir + prx + "_clean.fq.gz"
