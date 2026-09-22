@@ -96,7 +96,7 @@ def build_index(changed_refer,tool,Threads):
         genomesize = sum(fh.lengths)
         Nbases = int(round(min(14, np.log2(genomesize)/2 - 1)))
         command2 = 'STAR --runMode genomeGenerate -runThreadN ' + str(Threads) + ' --genomeDir ' + filedir_STAR + \
-                 ' --genomeFastaFiles ' + changed_refer + ' --genomeSAindexNbases '+ str(Nbases) + ' --limitGenomeGenerateRAM 84807429045'
+                 ' --genomeFastaFiles ' + changed_refer + ' --genomeSAindexNbases '+ str(Nbases)
         print(command2)
         subprocess.call(command2,shell=True)
 
