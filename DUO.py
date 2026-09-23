@@ -138,7 +138,7 @@ def fun_pre(raw_fq, prx, args):
         run_cmd("trim_galore -q 20 -j 7 --stringency 1 -e 0.3 --length " + str(cutoff_len1) + 
                 " -o " + clean_dir + " " + raw_fq)
 
-    tmpfile=clean_dir + re.match(".+/([^/]+).f(ast)?q(.gz)?$", raw_fq).group(1) + "_trimmed.fq.gz"
+    tmpfile=clean_dir + re.match("(.*/)?([^/]+).f(ast)?q(.gz)?$", raw_fq).group(1) + "_trimmed.fq.gz"
     trimmed_fq=clean_dir + prx + "_trimmed.fq.gz"
     run_cmd("mv " + tmpfile + " " + trimmed_fq)
 
