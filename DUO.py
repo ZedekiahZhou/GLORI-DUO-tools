@@ -3,11 +3,8 @@
 Author: Zhe Zhou, Peking University, Yi lab
 Date: May 24, 2024
 Email: zzhou24@pku.edu.cn
-Program: This program is used for DUO-seq analysis
-Version: 1.0.1
-ToDo: 
-    1. 最后一步call m6A可以考虑从拆分formatted_mpi开始， 而非referbase.mpi开始
-    2. m6A样本的所有点信息？怎么和merge结合
+Program: This program is used for GLORI-DUO analysis
+Version: 0.0.1
 """
 
 import argparse, subprocess, re, os, time, sys
@@ -82,16 +79,16 @@ group_m6Am = parser.add_argument_group("Call m6Am or m6A")
 group_m6Am.add_argument("-ds", "--ds2N", type=parse_unit_value, default=None, 
                         help="[Both] Downsample the merged sorted bam files to N reads, default is no downsample.")
 
-group_m6Am.add_argument("-c", "--cov", type=int, default=15, 
-                        help='[Both] minimum A+G coverage for TSS or m6A sites, default is 15')
-group_m6Am.add_argument("-C", "--Acov", type=int, default=5, 
-                        help='[Both] minimum A coverage for m6A(m) sites, default is 5')
-group_m6Am.add_argument("-s", "--Signal_Ratio", type=float, default=0.8, 
+group_m6Am.add_argument("-c", "--cov", type=int, default=1, 
+                        help='[Both] minimum A+G coverage for m6A(m) sites, default is 1, e.g., all A sites covered by reads')
+group_m6Am.add_argument("-C", "--Acov", type=int, default=0, 
+                        help='[Both] minimum unconverted A coverage for m6A(m) sites, default is 0')
+group_m6Am.add_argument("-s", "--Signal_Ratio", type=float, default=0, 
                         help="[Both] minimum ratio of signal reads (eg. reads with unconverted As less than 3), \
-                            default is 0.8")
+                            default is 0")
 group_m6Am.add_argument("-R", "--AG_Ratio", type=float, default=0.8, 
                     help="[Both] minimum ratio of (A+G reads)/total in this sites, default is 0.8")
-group_m6Am.add_argument("-adp", "--FDR", type=float, default=0.001, help="[Both] FDR cutoff, default is 0.001")
+group_m6Am.add_argument("-adp", "--FDR", type=float, default=1.1, help="[Both] FDR cutoff, default is 1.1")
 group_m6Am.add_argument("-ta", "--tssanno", nargs="*", type=str, help="[m6Am] Annotation of TSS range")
 group_m6Am.add_argument("--tpm", type=float, default=1.0, help="[m6Am] minimum TPM value for TSS, default is 1.0")
 group_m6Am.add_argument("--absDist", type=int, default=1000, 
@@ -101,7 +98,7 @@ group_m6Am.add_argument("--prop", type=float, default=0.05,
 group_m6Am.add_argument("--zscore", type=float, default=1.0,
                         help="[m6Am] minimum Z-score (calculated within a gene) for TSS, default is 1.0")
 group_m6Am.add_argument("-ba", "--baseanno", type=str, default='None',help="[m6A] Annotations at single-base resolution")
-group_m6Am.add_argument("-r", "--methyl_Ratio", type = float, default=0.1, help="[m6A] minimum m6A level")
+group_m6Am.add_argument("-r", "--methyl_Ratio", type = float, default=0, help="[m6A] minimum m6A level, default is 0.")
 
 group_QC = parser.add_argument_group("QC")
 group_QC.add_argument("--gtf", type=str, help="GTF file, chromosome name with suffix '_AG_converted'")
@@ -141,14 +138,16 @@ def fun_pre(raw_fq, prx, args):
         run_cmd("trim_galore -q 20 -j 7 --stringency 1 -e 0.3 --length " + str(cutoff_len1) + 
                 " -o " + clean_dir + " " + raw_fq)
 
-    tmpfile=clean_dir + re.match(".+/([^/]+).f(ast)?q(.gz)?$", raw_fq).group(1) + "_trimmed.fq.gz"
+    tmpfile=clean_dir + re.match("(.*/)?([^/]+).f(ast)?q(.gz)?$", raw_fq).group(2) + "_trimmed.fq.gz"
     trimmed_fq=clean_dir + prx + "_trimmed.fq.gz"
     run_cmd("mv " + tmpfile + " " + trimmed_fq)
 
     # remove duplicates and umi
     rmdup_fq=clean_dir + prx + "_rmdup.fq.gz"
-    run_cmd("seqkit rmdup -j 10 -s " + trimmed_fq + " | fastx_trimmer -Q 33 -f " + str(args.umi5+1) + \
-            " -z -o " + rmdup_fq)
+    # run_cmd("seqkit rmdup -j 10 -s " + trimmed_fq + " | fastx_trimmer -Q 33 -f " + str(args.umi5+1) + \
+    #         " -z -o " + rmdup_fq)
+    run_cmd("seqkit rmdup -j 10 -s " + trimmed_fq + " | seqkit subseq -j 10 -r " + str(args.umi5 + 1) + ":-1" + \
+            " -o " + rmdup_fq)
 
     # remove tag
     clean_fq=clean_dir + prx + "_clean.fq.gz"
@@ -254,9 +253,9 @@ def fun_m6Am(bam, prx, args):
     #run_cmd("mv " + ftss_anno + ".rmdup " + site_dir + "/intermediate/")
 
     # gzip
-    run_cmd("pigz -p " + str(args.threads) + " " + site_dir + prx + "_m6Am_sites_raw.tsv")
-    run_cmd("pigz -p " + str(args.threads) + " " + site_dir + prx + "_TSS_raw.bed.annotated.rmdup")
-    run_cmd("pigz -p " + str(args.threads) + " " + fAGcount)
+    run_cmd("pigz -f -p " + str(args.threads) + " " + site_dir + prx + "_m6Am_sites_raw.tsv")
+    run_cmd("pigz -f -p " + str(args.threads) + " " + site_dir + prx + "_TSS_raw.bed.annotated.rmdup")
+    run_cmd("pigz -f -p " + str(args.threads) + " " + fAGcount)
     
 
 def fun_m6A(bam, prx, args):
@@ -291,7 +290,7 @@ def fun_m6A(bam, prx, args):
         " -pre " + prx + " -o " + site_dir)
     
     fsites=site_dir + prx + ".totalm6A.FDR.csv"
-    run_cmd("pigz -p " + str(args.threads) + " " + fsites)
+    run_cmd("pigz -f -p " + str(args.threads) + " " + fsites)
 
 
 def fun_QC(bam, prx, args):
